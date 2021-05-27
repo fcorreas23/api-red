@@ -1,7 +1,7 @@
 {
   "name": "api-red",
   "version": "1.0.0",
-  "description": "API Red genomica IINIA",
+  "description": "API Red genomica INIA",
   "main": "index.js",
   "scripts": {
     "dev": "nodemon src/index.js --exec babel-node",

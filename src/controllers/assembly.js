@@ -87,6 +87,28 @@ export default {
         }
     },
 
+    getAssembly: async( req, res ) => {
+        try {
+            let { id } = req.params;
+
+            let assembly = await Assembly.findOne({ _id: id})
+            .populate('project',{ code:1 })
+            .populate('specie',{ scientific_name:1 });
+
+            res.json({
+                status: 'success',
+                result: assembly
+            });
+
+
+        } catch (error) {
+            res.status(500).json({
+                status: 'danger',
+                msg: error
+            });
+        }
+    },
+
 
     edit: async( req, res ) => {
         try {

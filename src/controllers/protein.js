@@ -72,6 +72,43 @@ export default {
         }
     },
 
+    searchByAnnotation: async(req, res) => {
+        try {
+            const text = req.params.text
+            console.log(`Buscando por ${text}`)
+            const result = await Protein.find({ 
+                $or: [
+                    {id : {$regex : text , $options: 'i' }},
+                    {gene_ontology: {$regex : text , $options: 'i' }},
+                    {enzyme_code: {$regex : text , $options: 'i' }},
+                    {kegg_ko: {$regex : text , $options: 'i' }},
+                    {kegg_pathway: {$regex : text , $options: 'i' }},
+                    {kegg_module: {$regex : text , $options: 'i' }},
+                    {cog_funcional: {$regex : text , $options: 'i' }}
+                ] 
+                }).populate('assembly', { code: 1, group: 1 })
+            if(result.length > 0){
+                res.json({
+                    status: "success",
+                    msg: `${result.length} items found`,
+                    result: result
+                });
+            }else{
+                res.json({
+                    result,
+                    status: "danger",
+                    message: `No item was found`
+                });
+            }
+                  
+        } catch (error) {
+            res.status(500).json({
+                status: 'danger',
+                msg: error,
+            });
+        }
+    },
+
     search: async(req, res) => {
         try {
             const text = req.params.text
@@ -95,14 +132,13 @@ export default {
                     message: `No item was found`
                 });
             }
-            
+                  
         } catch (error) {
             res.status(500).json({
                 status: 'danger',
                 msg: error,
             });
         }
-
     },
 
     edit: async( req, res ) => {

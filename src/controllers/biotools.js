@@ -112,6 +112,48 @@ export default {
 
     },
 
+    perf : async( req, res) => {
+        if(req.body.seq){
+            let  file = Date.now()
+            fs.writeFile(`/tmp/${file}.fna`, req.body.seq, function(err){
+                if(err) {return console.log(err);}
+                fs.writeFile(`/tmp/${file}`, `1\t${req.body.mono}\n2\t${req.body.di}\n3\t${req.body.tri}\n4\t${req.body.tetra}\n5\t${req.body.penta}\n6\t${req.body.hexa}`, function(err) {
+                    if(err) {return console.log(err);}
+                    
+                    let cmd_perf = spawn('PERF', ['-i', `/tmp/${file}.fna`, '-u', `/tmp/${file}`,'-a' ,'-t', 4])
+                    cmd_perf.stdout.on('data', (data) => {console.log(data.toString())});
+                
+                    cmd_perf.on('close', (code)=> {
+                        console.log(`PERF process exited with code ${code}`);
+                        if(code == 0){
+
+                            res.json({
+                                status: "success",
+                                msg: "Usando Secuencias",
+                                result: {
+                                    html: `/tmp/${file}_perf.html`,
+                                    tsv: `/tmp/${file}_perf.tsv`
+                                }
+                            })
+                        }else{
+                            res.json({
+                                status: 'danger',
+                                msg: 'ERROR PCR in silico finished',
+                                result: ''
+                            })
+                        }
+                    })
+                });  
+            })            
+        }else{
+            console.log(req.files)
+            res.json({
+                status: "success",
+                msg: "Usando File"
+            })
+        }
+    },
+
     /* 
         PRE ASSEMBLY
     */

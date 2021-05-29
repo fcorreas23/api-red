@@ -6,6 +6,9 @@ import Biotools from '../controllers//biotools';
 const route = Router();
 
 route.post( '/blast', Biotools.blast);
+route.post( '/in_silico_pcr', Biotools.in_silico_pcr);
+
+
 route.post( '/fastqc', Biotools.fastqc);
 route.post( '/bbduk', Biotools.bbduk);
 route.post( '/fscreen', Biotools.fscreen);

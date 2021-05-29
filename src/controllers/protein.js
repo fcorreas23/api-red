@@ -1,4 +1,5 @@
 import Protein from '../models/protein';
+import Gene from '../models/gene';
 
 export default {
 
@@ -53,7 +54,8 @@ export default {
         try {
             const { id } = req.params;
 
-            let proteins = await Protein.find({assembly: id}).populate('assembly', { code: 1 }).populate('gene', { locus:1, sequence:1 });
+            //let proteins = await Protein.find({assembly: id}).populate('assembly', { code: 1 }).populate('gene', { locus:1, sequence:1 });
+            let proteins = await Protein.find({assembly: id}).populate('assembly', { code: 1 });
 
             res.json({
                 status: 'success',
@@ -68,6 +70,39 @@ export default {
                 msg: error
             });
         }
+    },
+
+    search: async(req, res) => {
+        try {
+            const text = req.params.text
+            const resultados = await Protein.find({ 
+                $or: [
+                    {id : {$regex : text , $options: 'i' }},
+                    {description: {$regex : text , $options: 'i' }},
+                    {alias: {$regex : text , $options: 'i' }}
+                ] 
+                }).populate('assembly', { code: 1, group: 1 })
+            if(resultados.length > 0){
+                res.json({
+                    status: "success",
+                    msg: `${resultados.length} items found`,
+                    result: resultados
+                });
+            }else{
+                res.json({
+                    resultados,
+                    status: "danger",
+                    message: `No item was found`
+                });
+            }
+            
+        } catch (error) {
+            res.status(500).json({
+                status: 'danger',
+                msg: error,
+            });
+        }
+
     },
 
     edit: async( req, res ) => {
@@ -127,6 +162,27 @@ export default {
                 status: 'danger',
                 msg: error
             });
+        }
+    },
+
+    getSequence: async( req, res ) => {
+        try {
+            const locus = req.params.locus
+            const protein = await Protein.findOne({locus}).populate('assembly', { code: 1, group: 1 })
+            const nucl = await Gene.findOne({locus}, {sequence: 1})
+
+            res.json({
+                status: "success",
+                result: {
+                    protein,
+                    nucl
+                }
+            });
+        } catch (error) {
+            res.status(500).json({
+                status: 'danger',
+                msg: error,
+            }); 
         }
     }
 }

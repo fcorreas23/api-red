@@ -16,11 +16,16 @@ const asemblySchema = new Schema({
         type: Schema.ObjectId, 
         ref: 'specie',
     },
-
     variety: {
         type: String
     },
+    group: {
+        type: String,
+    },
 
+    description: {
+        type: String,
+    },
     methods: {
         type: String,
     },

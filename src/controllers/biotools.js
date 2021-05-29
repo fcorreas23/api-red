@@ -5,6 +5,7 @@ import fs from 'fs'
 import zipdir from 'zip-dir'
 import Storage from '../models/storage'
 import Report from '../services/report'
+import Assembly from '../models/assembly';
 
 const home = os.homedir()
 const databasesRoot = path.join(os.homedir(), 'Databases');
@@ -70,6 +71,47 @@ export default {
         }
 
     },
+
+    in_silico_pcr: async( req, res ) => {
+        try {
+            let pcr = '';
+            let amplicon = '';
+            let tax = await Assembly.findOne({code : req.body.seq}, {group: 1})
+            let input = `/srv/ftp/public/Pseudomonas/${tax.group}/${req.body.seq}/${req.body.seq}${req.body.target}`
+
+            console.log(input)
+
+            const in_silico = spawn('in_silico_PCR.pl', ['-s', input, '-a', req.body.forward, '-b', req.body.reverse, '-m', req.body.mismatch]);
+
+            in_silico.stdout.on('data', (data) =>{ console.log(data.toString())});
+            in_silico.stderr.on('data', (data) =>{ console.log(data.toString())});
+
+            in_silico.on('close', (code) => {
+                console.log(`in_silico_pcr process exited with code ${code}`);
+                if(code != 0){
+                    return res.json({
+                        status: 'danger',
+                        msg: 'ERROR PCR in silico finished',
+                        result: ''
+                    })
+                }
+                res.json({
+                    status: 'success',
+                    msg: 'PCR in silico finished',
+                    result: ''
+                })
+
+            })
+           
+        } catch (error) {
+            res.status(500).json({
+                status: 'danger',
+                msg: error
+            });
+        }
+
+    },
+
     /* 
         PRE ASSEMBLY
     */

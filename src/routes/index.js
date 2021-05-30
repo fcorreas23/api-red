@@ -7,7 +7,8 @@ import assemblyRoute from './assembly';
 import databaseRoute from './database';
 import geneRoute from './gene';
 import proteinRoute from './protein';
-import biotoolsRoute from './biotools'
+import biotoolsRoute from './biotools';
+import seqkitRoute from './seqkit';
 
 const route = Router();
 
@@ -20,6 +21,6 @@ route.use( '/database', databaseRoute);
 route.use( '/gene', geneRoute);
 route.use( '/protein', proteinRoute);
 route.use( '/biotools', biotoolsRoute);
-
+route.use('/seqkit', seqkitRoute);
 
 export default route;

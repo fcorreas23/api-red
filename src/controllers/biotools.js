@@ -3,6 +3,7 @@ import os from 'os'
 import path from 'path'
 import fs from 'fs'
 import zipdir from 'zip-dir'
+import csv from 'csv-parser';
 import Storage from '../models/storage'
 import Report from '../services/report'
 import Assembly from '../models/assembly';
@@ -74,17 +75,15 @@ export default {
 
     in_silico_pcr: async( req, res ) => {
         try {
-            let pcr = '';
+            let stats = '';
             let amplicon = '';
             let tax = await Assembly.findOne({code : req.body.seq}, {group: 1})
             let input = `/srv/ftp/public/Pseudomonas/${tax.group}/${req.body.seq}/${req.body.seq}${req.body.target}`
 
-            console.log(input)
-
             const in_silico = spawn('in_silico_PCR.pl', ['-s', input, '-a', req.body.forward, '-b', req.body.reverse, '-m', req.body.mismatch]);
 
-            in_silico.stdout.on('data', (data) =>{ console.log(data.toString())});
-            in_silico.stderr.on('data', (data) =>{ console.log(data.toString())});
+            in_silico.stdout.on('data', (data) =>{ console.log( stats += data.toString())});
+            in_silico.stderr.on('data', (data) =>{ console.log( amplicon += data.toString())});
 
             in_silico.on('close', (code) => {
                 console.log(`in_silico_pcr process exited with code ${code}`);
@@ -98,9 +97,11 @@ export default {
                 res.json({
                     status: 'success',
                     msg: 'PCR in silico finished',
-                    result: ''
+                    result: {
+                        pcr_stats : Report.tsv2Json(stats),
+                        amplicon
+                    }
                 })
-
             })
            
         } catch (error) {
@@ -113,45 +114,50 @@ export default {
     },
 
     perf : async( req, res) => {
-        if(req.body.seq){
-            let  file = Date.now()
-            fs.writeFile(`/tmp/${file}.fna`, req.body.seq, function(err){
-                if(err) {return console.log(err);}
-                fs.writeFile(`/tmp/${file}`, `1\t${req.body.mono}\n2\t${req.body.di}\n3\t${req.body.tri}\n4\t${req.body.tetra}\n5\t${req.body.penta}\n6\t${req.body.hexa}`, function(err) {
-                    if(err) {return console.log(err);}
-                    
-                    let cmd_perf = spawn('PERF', ['-i', `/tmp/${file}.fna`, '-u', `/tmp/${file}`,'-a' ,'-t', 4])
-                    cmd_perf.stdout.on('data', (data) => {console.log(data.toString())});
-                
-                    cmd_perf.on('close', (code)=> {
-                        console.log(`PERF process exited with code ${code}`);
-                        if(code == 0){
+        const file_name = Date.now()
+        const report = []
+        const headers = ['Chromosome','Repeat Start','Repeat Stop', 'Repeat Class', 'Repeat Length', 'Repeat Strand', 'Motif Number', 'Actual Repeat']
+        
+        fs.writeFile(`/tmp/${file_name}.motif`, `2\t${req.body.di}\n3\t${req.body.tri}\n4\t${req.body.tetra}\n5\t${req.body.penta}\n6\t${req.body.hexa}`, (err) => {
+            if (err) return res.json({status: 'danger', msg: err});
+            
+            let sampleFile = req.files.file;
+            let path_file = `/tmp/${sampleFile.name}`;
+            let name = path.basename(path_file).split('.')    
+            sampleFile.mv(path_file, (err) => {
+                if (err) return res.json({status: 'danger', msg: err});
 
+                let cmd_perf = spawn('PERF', ['-i', path_file, '-u', `/tmp/${file_name}.motif`,'-a' ,'-t', 4])
+                cmd_perf.stdout.on('data', (data) => {console.log(data.toString())});
+
+                cmd_perf.on('close', (code)=> {
+                    console.log(`PERF process exited with code ${code}`);
+                    if(code == 0){
+
+                        fs.createReadStream(`/tmp/${name[0]}_perf.tsv`)
+                        .pipe(csv({ separator: '\t', headers }))
+                        .on('data', (data) => report.push(data))
+                        .on('end', () => {
                             res.json({
-                                status: "success",
-                                msg: "Usando Secuencias",
+                                status: 'success',
+                                msg: 'PERF complete',
                                 result: {
-                                    html: `/tmp/${file}_perf.html`,
-                                    tsv: `/tmp/${file}_perf.tsv`
+                                    stats: report,
+                                    html: `/tmp/${name[0]}_perf.html`,
+                                    tsv: `/tmp/${name[0]}_perf.tsv`,
                                 }
-                            })
-                        }else{
-                            res.json({
-                                status: 'danger',
-                                msg: 'ERROR PCR in silico finished',
-                                result: ''
-                            })
-                        }
-                    })
-                });  
-            })            
-        }else{
-            console.log(req.files)
-            res.json({
-                status: "success",
-                msg: "Usando File"
+                           })
+                        });
+                    }else{
+                        res.json({
+                            status: 'danger',
+                            msg: 'ERROR',
+                            result: ''
+                        })
+                    }  
+                })
             })
-        }
+        })
     },
 
     /* 

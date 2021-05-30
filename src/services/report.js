@@ -71,5 +71,17 @@ export default {
         }).catch((error) => {
             return callback(error, null)
         })
+    },
+
+    tsv2Json: (tsv) => {
+        let lines = tsv.split('\n');
+        let headers = lines.shift().split('\t');
+        return lines.map(line => {
+            let data = line.split('\t');
+            return headers.reduce((obj, nextKey, index) => {
+                obj[nextKey] = data[index];
+                return obj;
+            }, {});
+        })
     }
 }

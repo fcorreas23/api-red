@@ -25,12 +25,13 @@ export default {
 
     blast: (req, res ) => {
         try {
-            let database = path.join(databasesRoot, req.body.database)
-            //let outfmt = "6 qseqid qlen sseqid slen stitle pident qcovs length mismatch gapopen evalue bitscore"
-            //let headers = ['qseqid', 'qlen', 'sseqid', 'slen','stitle', 'pident', 'qcovs','length', 'mismatch', 'gapopen', 'evalue', 'bitscore']         
+            console.log(req.body)
+            let database = path.join('/srv/databases', req.body.database)
+            let outfmt = "6 qseqid qlen sseqid slen stitle pident qcovs length mismatch gapopen evalue bitscore"
+            let headers = ['qseqid', 'qlen', 'sseqid', 'slen','stitle', 'pident', 'qcovs','length', 'mismatch', 'gapopen', 'evalue', 'bitscore']         
             let sequences = spawn('echo',[`${req.body.sequences}`])
-            let blast= spawn(`${req.body.type}`, ['-db', database,'-max_target_seqs', 5 ,'-evalue', 1e-20, '-perc_identity', 60, '-num_threads', process.env.THREADSM, '-outfmt',15])
-            let result = ''
+            let blast= spawn(`${req.body.type}`, ['-db', database,'-max_target_seqs', 30 ,'-evalue', 1e-25, '-num_threads', process.env.THREADSM, '-outfmt', outfmt])
+            let output = ''
             sequences.stdout.on('data', (data) => { blast.stdin.write(data) });
             sequences.stderr.on('data', (data) => { console.error(`stderr seq: ${data}`); });
             sequences.on('close', (code) => {
@@ -44,24 +45,29 @@ export default {
                 blast.stdin.end();
             });
 
-            blast.stdout.on('data', (data) => { result += data.toString();});    
+            blast.stdout.on('data', (data) => { output += data.toString();});    
             blast.stderr.on('data', (data) => { console.error(`blaststderr: ${data}`);});
 
             blast.on('close', (code) => {
                 console.log(`blast process exited with code ${code}`);
                 if (code !== 0) {
-                    console.log(`echo process exited with code ${code}`);
                     return res.json({
                         status: 'danger',
                         msg: 'ERROR Blast'
                     })
                 }
-    
+
                 res.json({
                     status: 'success',
                     msg: 'Blast finished',
-                    result: JSON.parse(result)
+                    result : Report.blastReport(output, headers)
                 })
+    
+                /* res.json({
+                    status: 'success',
+                    msg: 'Blast finished',
+                    result: JSON.parse(result) //outfmt 15
+                }) */
             });
 
         } catch (error) {
@@ -336,7 +342,7 @@ export default {
                 let databases =  req.body.databases.map(x => {
                     let name = x.split(path.sep)
                     let nameCapitalized = name[name.length-1].charAt(0).toUpperCase() + name[name.length-1].slice(1)
-                    return `DATABASE\t${nameCapitalized}\t${path.join(databasesRoot, x)}`
+                    return `DATABASE\t${nameCapitalized}\t${path.join('/srv/databases', x)}`
                 }) 
 
                 file_config.on('error', function(err) {
@@ -466,7 +472,7 @@ export default {
                         Storage.insertMany([aResult, aGenomic], (err, data) => {
                             if(err) return console.error('Something went wrong!', err);
                             
-                            Report.assemblyStats(`${output}/assembly.fasta`, (err, stdout) => {
+                            Report.assemblyStats(`${home}/Storage/${req.body.user._id}/results/${req.body.name}_genomic.fna`, (err, stdout) => {
                                 if(err) return console.error('Something went wrong!', err); 
 
                                 res.json({

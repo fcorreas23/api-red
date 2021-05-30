@@ -83,5 +83,16 @@ export default {
                 return obj;
             }, {});
         })
+    },
+
+    blastReport: (output, headers) => {
+        let lines = output.split('\n');
+        return lines.map(line => {
+            let data = line.split('\t');
+            return headers.reduce((obj, nextKey, index) => {
+                obj[nextKey] = data[index];
+                return obj;
+            }, {});
+        })
     }
 }

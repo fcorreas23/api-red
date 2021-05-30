@@ -18,7 +18,7 @@ app.listen(app.get('port'), () => {
     console.log('Sirviendo en puerto ', app.get('port'));
     
     mongoose.connect(uri, option)
-    .then(() => console.log(`conenctado a base de datos ${process.env.DATABASE}`))
+    .then(() => console.log(`conectado a base de datos ${process.env.DATABASE}`))
     .catch(e => console.log(e));
 
 });

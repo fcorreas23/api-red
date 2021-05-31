@@ -2,12 +2,13 @@ import { exec, spawn } from 'child_process'
 import os from 'os'
 import path from 'path'
 import fs from 'fs'
-import compress from 'zip-a-folder'
+import compress, { zip } from 'zip-a-folder'
 import zipdir from 'zip-dir'
 import csv from 'csv-parser';
 import Storage from '../models/storage'
 import Report from '../services/report'
 import Assembly from '../models/assembly';
+import { Z_PARTIAL_FLUSH } from 'zlib'
 
 const home = os.homedir()
 const databasesRoot = path.join(os.homedir(), 'Databases');
@@ -650,6 +651,70 @@ export default {
                 }
             }) 
             
+        } catch (error) {
+            res.status(500).json({
+                status: 'danger',
+                msg: error
+            }); 
+        }
+    },
+
+    busco: (req, res) => {
+        try {
+            let config = '/opt/biotools/busco/config/config.ini'
+            let fasta = path.join(os.homedir(), req.body.assembly)
+            let linage = `/srv/databases/busco/${req.body.linage}`
+            let output = path.join(os.homedir(), `Storage/${req.body.user._id}/tmp/`);
+            let parametros = ['-i', fasta, '-o', req.body.name, '--out_path', output, '-l', linage, '-m', req.body.mode, '-c', process.env.THREADSM, '--config', config, '--offline', '-f']
+
+            const cmd_busco = spawn('busco', parametros)
+            cmd_busco.stderr.on('data', (data) => {console.log(data.toString())});
+            cmd_busco.stdout.on('data', (data) => {console.log(data.toString())});
+
+            
+            cmd_busco.on('close', (code) => {
+                console.log(`BUSCO process exited with code ${code}`);
+                if(code == 0){
+
+                    let bResult = {
+                        user: req.body.user._id,
+                        filename: `${req.body.name}.zip`,
+                        path: `Storage/${req.body.user._id}/results/${req.body.name}.zip`,
+                        description: 'Busco análsis resultados',
+                        type: 'other',
+                        category: 'result'
+                    }
+
+                    let info = fs.readFileSync(`${output}/${req.body.name}/short_summary.specific.${req.body.linage}.${req.body.name}.txt`,'utf8')
+                    //let lines = data.split('\n')
+                    zipdir(`${output}/${req.body.name}`, {saveTo: `${home}/Storage/${req.body.user._id}/results/${req.body.name}.zip`}, function (err, buffer) {
+                        if(err) console.log('Something went wrong!', err);
+                        Storage.create(bResult, (err, data) => {
+                            if(err) console.log('Something went wrong!', err);
+                            res.json({
+                                status: 'success',
+                                msg:'Busco finished',
+                                result: {
+                                    info,
+                                    busco: data
+                                }
+                            })
+                        }) 
+                    })
+                }else{
+                    return res.json({
+                        status: 'danger',
+                        msg: 'BUSCO finished with error',
+                        result: ''
+                    })
+                }
+
+            })
+           /*  res.json({
+                status: 'success',
+                msg:'Busco finished',
+                result: parametros
+            })  */           
         } catch (error) {
             res.status(500).json({
                 status: 'danger',

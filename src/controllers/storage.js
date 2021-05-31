@@ -177,7 +177,7 @@ export default {
             }
 
             let filepath = path.join(home, file.path)
-            
+            res.set('Content-Type','application/octet-stream');
             res.download(filepath)
 
         } catch (error) {
@@ -191,7 +191,7 @@ export default {
     fastDownload: (req, res) => {
         let basename = path.basename(req.body.report)
         let file = path.join(home,req.body.report)
-        res.setHeader('Content-type', 'application/zip');
+        res.set('Content-Type','application/octet-stream');
         res.header("Cache-Control", "no-cache, no-store, must-revalidate");
         res.header("Pragma", "no-cache");
         res.header("Expires", 0);

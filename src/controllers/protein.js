@@ -204,7 +204,7 @@ export default {
     getSequence: async( req, res ) => {
         try {
             const locus = req.params.locus
-            const protein = await Protein.findOne({locus}).populate('assembly', { code: 1, group: 1 })
+            const protein = await Protein.findOne({locus}).populate('assembly', { code: 1, specie: 1, group: 1 });
             const nucl = await Gene.findOne({locus}, {sequence: 1})
 
             res.json({

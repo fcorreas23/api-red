@@ -16,6 +16,7 @@ route.post( '/fscreen', Biotools.fscreen);
 route.post( '/unicycler', Biotools.unicycler);
 route.post( '/quast', Biotools.quast);
 route.post( '/prokka', Biotools.prokka);
+route.post( '/busco', Biotools.busco);
 
 
 export default route;

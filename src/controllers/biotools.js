@@ -2,6 +2,7 @@ import { exec, spawn } from 'child_process'
 import os from 'os'
 import path from 'path'
 import fs from 'fs'
+import compress from 'zip-a-folder'
 import zipdir from 'zip-dir'
 import csv from 'csv-parser';
 import Storage from '../models/storage'
@@ -441,14 +442,24 @@ export default {
                     console.log(`unicycler process exited with code ${code}`);
                     if(code == 0){
 
-                        zipdir(output, { saveTo: `${home}/Storage/${req.body.user._id}/results/${req.body.name}.zip` }, function (err, buffer) {
+                        compress.zipFolder(output, `${home}/Storage/${req.body.user._id}/results/${req.body.name}.zip`, function(err){
+                            if(err){ return cb(err, null)}
+
+                            fs.rename(`${output}/assembly.fasta`, `${home}/Storage/${req.body.user._id}/results/${req.body.name}_genomic.fna`, (err) => {
+                                if(err) console.log('Something went wrong!', err);
+                                
+                            });
+
+                        })
+
+                        /* zipdir(output, { saveTo: `${home}/Storage/${req.body.user._id}/results/${req.body.name}.zip` }, function (err, buffer) {
                             if(err) console.log('Something went wrong!', err);
 
                             fs.rename(`${output}/assembly.fasta`, `${home}/Storage/${req.body.user._id}/results/${req.body.name}_genomic.fna`, (err) => {
                                 if(err) console.log('Something went wrong!', err);
                                 
                             });
-                        })
+                        }) */
                         
                         let aResult = {
                             user: `${req.body.user._id}`,
@@ -471,19 +482,26 @@ export default {
 
                         Storage.insertMany([aResult, aGenomic], (err, data) => {
                             if(err) return console.error('Something went wrong!', err);
+
+                            console.log('Unicycler finished')
+
+                            /* res.json({
+
+                                msg:'Unicycler finished'
+                            }) */
                             
-                            Report.assemblyStats(`${home}/Storage/${req.body.user._id}/results/${req.body.name}_genomic.fna`, (err, stdout) => {
+                            /* Report.assemblyStats(`${home}/Storage/${req.body.user._id}/results/${req.body.name}_genomic.fna`, (err, stdout) => {
                                 if(err) return console.error('Something went wrong!', err); 
 
                                 res.json({
                                     status: 'success',
-                                    msg:'Unicycler finished',
+                                    status: 'success',
                                     result: {
                                         stats: JSON.parse(stdout),
                                         unicycler: data[0]
                                     }
                                 })
-                            })                      
+                            })*/                  
                         })
                     }else{
                         res.json({
@@ -492,6 +510,11 @@ export default {
                             result: ''
                         })
                     }
+                })
+
+                res.json({
+                    status: 'success',
+                    msg: `Proyecto ${req.body.name} esta corriendo. Una vez terminado se avisará al correo ${req.body.user.email}`
                 })
             }
         } catch (error) {
@@ -508,8 +531,10 @@ export default {
     quast: (req, res ) => {
 
         try {
+
+            console.log(req.body)
             let assembly = path.join(os.homedir(), req.body.assembly)
-            let reference = path.join(os.homedir(), `Databases/genomes/${req.body.reference}_genomic`)
+            let reference = `/srv/databases/genomes/${req.body.reference}_genomic`
             let output = path.join(os.homedir(), `Storage/${req.body.user._id}/tmp/${req.body.name}`);
             
             let quast = spawn('quast.py', ['-r', `${reference}.fna`, '-g', `${reference}.gff`, '-t', process.env.THREADSM, '-o', output, '--no-html','--no-icarus', assembly])

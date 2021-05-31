@@ -136,8 +136,37 @@ export default {
 
     download: async(req, res ) => {
         try {
+
+            /* let _id = req.params.id
+            Storage.findOne({_id}, function(err, file){
+                if(err){
+                    res.status(406).json({status: 'failed',err});
+                } 
+                res.setHeader('Content-Disposition', 'attachment');
+                res.header("Cache-Control", "no-cache, no-store, must-revalidate");
+                res.header("Pragma", "no-cache");
+                res.header("Expires", 0); 
+
+                let filepath = path.join(home, file.path)
+                res.download(filepath, (err)=>{
+                    if(err){
+                        res.status(406).json({
+                            status: 'failed',
+                            err
+                        });
+                        
+                    }
+                    console.log('Your file has been downloaded!')
+
+                });    
+            }) */
+
+            /* res.setHeader('Content-Disposition', 'attachment');
+            res.header("Cache-Control", "no-cache, no-store, must-revalidate");
+            res.header("Pragma", "no-cache");
+            res.header("Expires", 0); */
             
-            let _id =req.params.id;
+            let _id = req.params.id;
             let file = await Storage.findOne({_id})
 
             if(!file){

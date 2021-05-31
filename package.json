@@ -35,6 +35,8 @@
     "jsonwebtoken": "^8.5.1",
     "mongoose": "^5.12.11",
     "morgan": "^1.10.0",
+    "nodemailer": "^6.6.1",
+    "zip-a-folder": "0.0.12",
     "zip-dir": "^2.0.0"
   },
   "devDependencies": {

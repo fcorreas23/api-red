@@ -137,7 +137,7 @@ export default {
     download: async(req, res ) => {
         try {
 
-            /* let _id = req.params.id
+            let _id = req.params.id
             Storage.findOne({_id}, function(err, file){
                 if(err){
                     res.status(406).json({status: 'failed',err});
@@ -159,14 +159,14 @@ export default {
                     console.log('Your file has been downloaded!')
 
                 });    
-            }) */
+            })
 
             /* res.setHeader('Content-Disposition', 'attachment');
             res.header("Cache-Control", "no-cache, no-store, must-revalidate");
             res.header("Pragma", "no-cache");
             res.header("Expires", 0); */
             
-            let _id = req.params.id;
+            /* let _id = req.params.id;
             let file = await Storage.findOne({_id})
 
             if(!file){
@@ -175,10 +175,10 @@ export default {
                     msg: `The record does not exist`
                 })
             }
-
+            res.setHeader('Content-Disposition', 'attachment');
             let filepath = path.join(home, file.path)
             res.set('Content-Type','application/octet-stream');
-            res.download(filepath)
+            res.download(filepath) */
 
         } catch (error) {
             res.status(500).json({

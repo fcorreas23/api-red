@@ -225,9 +225,10 @@ export default {
             let baseName = await Storage.findOne( {filename: `${req.body.basename}_R1_good.fq.gz`} );
 
             if(baseName){
-                return res.status(400).json({
+                return res.status(200).json({
                     status: 'warning',
-                    msg: `The Basename is already registered: ${req.body.basename}`
+                    msg: `The Basename is already registered: ${req.body.basename}`,
+                    result: ''
                 })
 
             }else{
@@ -327,9 +328,10 @@ export default {
             let baseName = await Storage.findOne( {filename: `${req.body.basename}.zip`} );
 
             if(baseName){
-                return res.status(400).json({
+                return res.status(200).json({
                     status: 'warning',
-                    msg: `The Basename is already registered: ${req.body.basename}`
+                    msg: `The Basename is already registered: ${req.body.basename}`,
+                    result: ''
                 })
 
             }else{
@@ -388,7 +390,7 @@ export default {
                                     if(err) console.log('Something went wrong!', err);
                                     res.json({
                                         status: 'success',
-                                        msg: 'Fastq Screen',
+                                        msg: 'Fastq Screen finished',
                                         result: {
                                             report: data,
                                             img
@@ -399,7 +401,7 @@ export default {
                         }else{
                             res.json({
                                 status: 'danger',
-                                msg: 'Unicycler finished with error',
+                                msg: 'Fastq screen finished with error',
                                 result: ''
                             })
                         }
@@ -514,7 +516,7 @@ export default {
 
                 res.json({
                     status: 'success',
-                    msg: `Proyecto ${req.body.name} esta corriendo. Una vez terminado se avisará al correo ${req.body.user.email}`
+                    msg: `Proyecto ${req.body.name} esta puesto en cola para su ejecución. Una vez terminado el trabajo se avisará al correo ${req.body.user.email}`
                 })
             }
         } catch (error) {
@@ -629,7 +631,7 @@ export default {
                         type: 'other',
                         category: 'result'
                     }
-
+                    let info = fs.readFileSync(`${output}/${req.body.name}.txt`,'utf8')
                     Storage.create(pResult, (err, data) => {
                         if(err) console.log('Something went wrong!', err);
                         res.json({
@@ -637,7 +639,7 @@ export default {
                             msg:'Prokka finished',
                             result: {
                                 prokka: data,
-                                report: `${output}/${req.body.name}.txt`
+                                report: info
                             }
                         })
                     })                

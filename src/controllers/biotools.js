@@ -27,7 +27,6 @@ export default {
 
     blast: (req, res ) => {
         try {
-            console.log(req.body)
             let database = path.join('/srv/databases', req.body.database)
             let outfmt = "6 qseqid qlen sseqid slen stitle pident qcovs length mismatch gapopen evalue bitscore"
             let headers = ['qseqid', 'qlen', 'sseqid', 'slen','stitle', 'pident', 'qcovs','length', 'mismatch', 'gapopen', 'evalue', 'bitscore']         

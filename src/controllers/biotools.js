@@ -8,7 +8,6 @@ import csv from 'csv-parser';
 import Storage from '../models/storage'
 import Report from '../services/report'
 import Assembly from '../models/assembly';
-import { Z_PARTIAL_FLUSH } from 'zlib'
 
 const home = os.homedir()
 const databasesRoot = path.join(os.homedir(), 'Databases');
@@ -85,7 +84,7 @@ export default {
             let stats = '';
             let amplicon = '';
             let tax = await Assembly.findOne({code : req.body.seq}, {group: 1})
-            let input = `/srv/ftp/public/Pseudomonas/${tax.group}/${req.body.seq}/${req.body.seq}${req.body.target}`
+            let input = `/srv/ftp/Pseudomonas/${tax.group}/${req.body.seq}/${req.body.seq}${req.body.target}`
 
             const in_silico = spawn('in_silico_PCR.pl', ['-s', input, '-a', req.body.forward, '-b', req.body.reverse, '-m', req.body.mismatch]);
 
@@ -165,6 +164,47 @@ export default {
                 })
             })
         })
+    },
+
+
+    corehunter: async(req, res) => {
+        try {
+
+            let sampleFile = req.files.file;
+            let path_file = `/tmp/${sampleFile.name}`;
+            let always = req.body.always ? req.body.always : ''
+            
+
+
+            let script = `library(corehunter)\n` + 
+            `data <- genotypes(file = "${path_file}", format = "default")\n` +
+            `select <- c(${always})\n` + 
+            `obj <- list(objective("EN", "MR", weight = 0.5), objective("AN", "MR", weight = 0.5))\n` + 
+            `core <- sampleCore(data, obj = obj, size = ${req.body.core}, time= ${req.body.time}, always.selected = select)\n`
+            
+            
+            
+            
+            /* console.log(req.files)
+            console.log(req.body) */
+            console.log(req.body)
+            console.log("Always", always)
+            console.log("Tamaño de Ojetivos: ", req.body.objetives[0])
+            console.log(script)
+            res.json({
+                status: 'success',
+                msg: "WELL DONE",
+                objetives: req.body.objetives
+            })
+
+            /* let sampleFile = req.files.file;
+            let path_file = `/tmp/${sampleFile.name}`;
+            let name = path.basename(path_file).split('.') */    
+
+            
+        } catch (error) {
+            
+        }
     },
 
     /* 
@@ -534,7 +574,7 @@ export default {
 
         try {
 
-            console.log(req.body)
+            //console.log(req.body)
             let assembly = path.join(os.homedir(), req.body.assembly)
             let reference = `/srv/databases/genomes/${req.body.reference}_genomic`
             let output = path.join(os.homedir(), `Storage/${req.body.user._id}/tmp/${req.body.name}`);

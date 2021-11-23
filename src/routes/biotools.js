@@ -8,6 +8,7 @@ const route = Router();
 route.post( '/blast', Biotools.blast);
 route.post( '/in_silico_pcr', Biotools.in_silico_pcr);
 route.post( '/perf', Biotools.perf);
+route.post( '/corehunter', Biotools.corehunter)
 
 
 route.post( '/fastqc', Biotools.fastqc);

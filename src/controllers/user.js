@@ -141,6 +141,7 @@ export default {
 
     login: async( req, res ) => {
         try {
+            console.log(req.body)
             const user = await User.findOne({ email: req.body.email, status: true });
             
             if(user){
@@ -169,14 +170,14 @@ export default {
                     });
 
                 }else{
-                    res.status(404).json({
+                    res.status(200).json({
                         status: 'warning',
                         msg: "Username or password is incorrect"
                     });
                 }
             }else{
                 
-                res.status(404).json({
+                res.status(200).json({
                     status: 'warning',
                     msg: "Username or password is incorrect"
                 });           
